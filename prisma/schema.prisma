@@ -186,6 +186,9 @@ model Motorcycle {
   @@index([branchId])
   @@index([salesStatus])
   @@index([operationalStatus])
+  @@index([deletedAt])
+  @@index([branchId, deletedAt])
+  @@index([branchId, brandId, operationalStatus, salesStatus, deletedAt])
 }
 
 model MotorImage {
@@ -235,6 +238,8 @@ model Transaction {
   @@index([branchId])
   @@index([status])
   @@index([expiresAt])
+  @@index([createdAt])
+  @@index([status, createdAt])
 }
 
 model TransactionItem {
