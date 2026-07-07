@@ -1,0 +1,267 @@
+// ────────────────────────────────
+// RNJ Motospot V2 — Prisma Schema
+// Source: DATABASE.md (authoritative)
+// Note: datasource URL is configured in prisma.config.ts (Prisma v7)
+// ────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ────────────────────────────────
+// ENUMS
+// ────────────────────────────────
+
+enum UserRole {
+  ADMIN
+  CASHIER
+}
+
+enum OperationalStatus {
+  AVAILABLE
+  MAINTENANCE
+}
+
+enum SalesStatus {
+  AVAILABLE
+  BOOKED
+  SOLD
+}
+
+enum TransactionStatus {
+  SALE
+  BOOKING
+  CANCELLED
+}
+
+// ────────────────────────────────
+// AUTH (NextAuth / Auth.js — database session strategy)
+// ────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ────────────────────────────────
+// CORE ENTITIES
+// ────────────────────────────────
+
+model Branch {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users         User[]
+  employees     Employee[]
+  motorcycles   Motorcycle[]
+  transactions  Transaction[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         UserRole
+  branchId     String?           // required for CASHIER, null allowed for ADMIN
+  employeeId   String   @unique  // mandatory 1-to-1 link
+  deletedAt    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  branch       Branch?      @relation(fields: [branchId], references: [id])
+  employee     Employee     @relation(fields: [employeeId], references: [id])
+  accounts     Account[]
+  sessions     Session[]
+  transactions Transaction[] @relation("TransactionCreatedBy")
+  auditLogs    AuditLog[]
+
+  @@index([branchId])
+}
+
+model Employee {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  branchId  String
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  branch Branch @relation(fields: [branchId], references: [id])
+  user   User?
+
+  @@index([branchId])
+}
+
+model Brand {
+  id        String   @id @default(cuid())
+  name      String
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  motorcycles Motorcycle[]
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  motorcycles Motorcycle[]
+}
+
+model Motorcycle {
+  id                String            @id @default(cuid())
+  brandId           String
+  categoryId        String
+  branchId          String
+  licensePlate      String            @unique
+  chassisNumber     String            @unique
+  engineNumber      String            @unique
+  mileage           Int
+  taxExpiration     DateTime?
+  purchasePrice     Decimal
+  openPrice         Decimal
+  sellingPrice      Decimal
+  color             String?
+  originalPartsInfo String?
+  instagramLink     String?
+  operationalStatus OperationalStatus @default(AVAILABLE)
+  salesStatus       SalesStatus       @default(AVAILABLE)
+  deletedAt         DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  brand            Brand              @relation(fields: [brandId], references: [id])
+  category         Category           @relation(fields: [categoryId], references: [id])
+  branch           Branch             @relation(fields: [branchId], references: [id])
+  images           MotorImage[]
+  transactionItems TransactionItem[]
+
+  @@index([branchId])
+  @@index([salesStatus])
+  @@index([operationalStatus])
+}
+
+model MotorImage {
+  id           String   @id @default(cuid())
+  motorcycleId String
+  path         String   // relative file path in server storage
+  isMain       Boolean  @default(false)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  motorcycle Motorcycle @relation(fields: [motorcycleId], references: [id], onDelete: Cascade)
+
+  @@index([motorcycleId])
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String?
+  email     String?
+  address   String?
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions Transaction[]
+}
+
+model Transaction {
+  id                String            @id @default(cuid())
+  transactionNumber String            @unique
+  branchId          String
+  customerId        String
+  status            TransactionStatus
+  createdById       String
+  expiresAt         DateTime?         // only relevant when status = BOOKING
+  cancelledAt       DateTime?
+  cancelledById     String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  branch     Branch             @relation(fields: [branchId], references: [id])
+  customer   Customer           @relation(fields: [customerId], references: [id])
+  createdBy  User               @relation("TransactionCreatedBy", fields: [createdById], references: [id])
+  items      TransactionItem[]
+
+  @@index([branchId])
+  @@index([status])
+  @@index([expiresAt])
+}
+
+model TransactionItem {
+  id             String   @id @default(cuid())
+  transactionId  String
+  motorcycleId   String
+  priceAtSale    Decimal  // snapshot of price at time of transaction
+  createdAt      DateTime @default(now())
+
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  motorcycle  Motorcycle  @relation(fields: [motorcycleId], references: [id])
+
+  @@unique([transactionId, motorcycleId])
+  @@index([motorcycleId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String   // e.g. "MOTORCYCLE_CREATED", "BOOKING_EXPIRED", "SALE_CANCELLED"
+  entityType String   // e.g. "Motorcycle", "Transaction"
+  entityId   String
+  metadata   Json?    // snapshot/diff
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}

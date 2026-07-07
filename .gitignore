@@ -20,6 +20,9 @@
 # production
 /build
 
+# storage (runtime data - uploaded motorcycle images)
+/storage/
+
 # misc
 .DS_Store
 *.pem
@@ -30,8 +33,14 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files (committed .env.example, ignore actual .env files)
+.env
+.env.local
+.env.production
+.env.development
+
+# keep .env.example (per SECURITY.md Section 7)
+!.env.example
 
 # vercel
 .vercel

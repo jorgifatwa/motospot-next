@@ -1,26 +1,86 @@
+/* ────────────────────────────────
+   RNJ Motospot V2 — Global Styles & Design Tokens
+   Source: UI_GUIDELINE.md Sections 2–3, 5
+   Tailwind v4 CSS-first configuration via @theme
+   ──────────────────────────────── */
+
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ────────────────────────────────
+   Design Tokens (UI_GUIDELINE.md Section 2 — Brand Foundation)
+   ──────────────────────────────── */
+@theme {
+  /* Brand Colors */
+  --color-brand-red: #d9272e;
+  --color-brand-red-dark: #a81e23;
+  --color-ink: #1a1a1a;
+  --color-ink-soft: #3d3d3d;
+
+  /* Neutral Scale (UI_GUIDELINE.md Section 3) */
+  --color-bg: #ffffff;
+  --color-surface: #f7f7f8;
+  --color-surface-alt: #efeff1;
+  --color-border: #e2e2e5;
+  --color-text-muted: #6b6b70;
+
+  /* Status Colors (UI_GUIDELINE.md Section 4) */
+  --color-status-ok: #16a34a;
+  --color-status-maintenance: #f59e0b;
+  --color-status-booked: #2563eb;
+  --color-status-sold: #1a1a1a;
+  --color-status-cancelled: #6b6b70;
+
+  /* Typography (UI_GUIDELINE.md Section 5) */
+  --font-display: "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+
+  /* Spacing (UI_GUIDELINE.md Section 6 — base unit 4px) */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-12: 48px;
+
+  /* Font Sizes (UI_GUIDELINE.md Section 5) */
+  --font-size-display: 32px;
+  --font-size-h1: 24px;
+  --font-size-h2: 18px;
+  --font-size-body: 14px;
+  --font-size-caption: 12px;
+
+  /* Font Weights */
+  --font-weight-display: 800;
+  --font-weight-h1: 700;
+  --font-weight-h2: 700;
+  --font-weight-body: 400;
+  --font-weight-body-medium: 500;
+  --font-weight-caption: 500;
+
+  /* Border Radius */
+  --radius-btn: 8px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* ────────────────────────────────
+   Base Styles
+   ──────────────────────────────── */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  color: var(--color-ink);
+  background-color: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Tabular figures for dashboard KPIs and prices (UI_GUIDELINE.md Section 5) */
+.font-tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Focus visible styles (UI_GUIDELINE.md Section 10 — Accessibility) */
+*:focus-visible {
+  outline: 2px solid var(--color-brand-red);
+  outline-offset: 2px;
 }
