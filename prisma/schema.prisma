@@ -265,3 +265,24 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([createdAt])
 }
+
+// ────────────────────────────────
+// SYSTEM SETTING (configurable by Admin, e.g. booking expiration)
+// BUSINESS_RULE.md Section 9.2 — booking expiration must be configurable, not hardcoded
+// ────────────────────────────────
+
+model SystemSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+// ────────────────────────────────
+// TRANSACTION COUNTER (atomic per-day sequence for TRX-YYYYMMDD-NNNNN)
+// BUSINESS_RULE.md Section 8 — unique transaction numbers under concurrency
+// ────────────────────────────────
+
+model TransactionCounter {
+  date String @id // YYYYMMDD
+  seq  Int    @default(0)
+}

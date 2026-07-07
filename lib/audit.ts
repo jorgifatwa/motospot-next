@@ -28,13 +28,24 @@ export type AuditAction =
   | "MOTORCYCLE_CREATED"
   | "MOTORCYCLE_UPDATED"
   | "MOTORCYCLE_DELETED"
+  | "CUSTOMER_CREATED"
+  | "CUSTOMER_UPDATED"
+  | "CUSTOMER_DELETED"
   | "TRANSACTION_CREATED"
   | "TRANSACTION_CANCELLED"
   | "BOOKING_CONVERTED"
   | "BOOKING_EXPIRED";
 
 export type EntityType =
-  "User" | "Branch" | "Brand" | "Category" | "Employee" | "Motorcycle" | "Transaction" | "Booking";
+  | "User"
+  | "Branch"
+  | "Brand"
+  | "Category"
+  | "Employee"
+  | "Motorcycle"
+  | "Customer"
+  | "Transaction"
+  | "Booking";
 
 export interface AuditMetadata {
   before?: Record<string, unknown>;

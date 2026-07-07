@@ -1,0 +1,36 @@
+// ────────────────────────────────
+// Transactions List Page (Server Component)
+// ROADMAP.md Phase 4 — transaction history
+// ────────────────────────────────
+
+import { auth } from "@/lib/auth";
+import { isAdmin } from "@/lib/rbac";
+import { getTransactions } from "@/modules/transaction/transaction.actions";
+import { getBranches } from "@/modules/branch/branch.actions";
+import { TransactionsClient } from "./_components/transactions-client";
+
+export const dynamic = "force-dynamic";
+
+export default async function TransactionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ branchId?: string; search?: string }>;
+}) {
+  const session = await auth();
+  const admin = isAdmin(session);
+  const params = await searchParams;
+
+  const [result, branchesResult] = await Promise.all([
+    getTransactions({ branchId: params?.branchId, search: params?.search, take: 100 }),
+    getBranches(),
+  ]);
+
+  return (
+    <TransactionsClient
+      transactions={result.transactions}
+      branches={branchesResult.branches}
+      userBranchId={session?.user?.branchId || undefined}
+      isAdmin={admin}
+    />
+  );
+}
