@@ -1,67 +1,47 @@
 // ────────────────────────────────
-// Dashboard Page (Placeholder)
-// ROADMAP.md Phase 1 — placeholder content
+// Dashboard Page
+// ROADMAP.md Phase 5 — Dashboard & Reporting
+// BUSINESS_RUDE.md Section 12 — dashboard metrics
+// UI_GUIDELINE.md Section 5 — bold KPI typography (tabular-nums, display-scale font)
 // ────────────────────────────────
 
 import { auth } from "@/lib/auth";
 import { isAdmin } from "@/lib/rbac";
+import { prisma } from "@/lib/prisma";
+import { dashboardService } from "@/modules/dashboard/dashboard.service";
+import { DashboardClient } from "./_components/dashboard-client";
 
 export default async function DashboardPage() {
   const session = await auth();
 
+  if (!session?.user) {
+    throw new Error("Unauthorized");
+  }
+
+  const userIsAdmin = isAdmin(session);
+  const userBranchId = session.user.branchId ?? null;
+
+  // Fetch initial metrics — Cashier sees their own branch, Admin sees all (no filter initially).
+  const initialMetrics = await dashboardService.getMetrics(
+    userIsAdmin ? undefined : (userBranchId ?? undefined),
+  );
+
+  // Fetch branches for the Admin filter dropdown (only active branches).
+  let branches: { id: string; name: string }[] = [];
+  if (userIsAdmin) {
+    branches = await prisma.branch.findMany({
+      where: { deletedAt: null },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    });
+  }
+
   return (
-    <div className="space-y-6">
-      {/* Welcome Section */}
-      <div>
-        <h2 className="font-display text-display font-extrabold text-ink mb-2">
-          Welcome back, {session?.user?.name}!
-        </h2>
-        <p className="text-body text-text-muted">
-          {"Here's what's happening with your dealership today."}
-        </p>
-      </div>
-
-      {/* KPI Cards (Placeholder) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-surface border border-border rounded-lg p-6">
-          <p className="text-caption font-medium text-text-muted uppercase tracking-wide mb-2">
-            Total Motorcycles
-          </p>
-          <p className="font-display text-display font-extrabold text-ink font-tabular-nums">—</p>
-        </div>
-
-        <div className="bg-surface border border-border rounded-lg p-6">
-          <p className="text-caption font-medium text-text-muted uppercase tracking-wide mb-2">
-            Available
-          </p>
-          <p className="font-display text-display font-extrabold text-status-ok font-tabular-nums">
-            —
-          </p>
-        </div>
-
-        <div className="bg-surface border border-border rounded-lg p-6">
-          <p className="text-caption font-medium text-text-muted uppercase tracking-wide mb-2">
-            Sold This Month
-          </p>
-          <p className="font-display text-display font-extrabold text-ink font-tabular-nums">—</p>
-        </div>
-
-        <div className="bg-surface border border-border rounded-lg p-6">
-          <p className="text-caption font-medium text-text-muted uppercase tracking-wide mb-2">
-            Revenue
-          </p>
-          <p className="font-display text-display font-extrabold text-ink font-tabular-nums">—</p>
-        </div>
-      </div>
-
-      {/* Info Banner */}
-      <div className="bg-surface border border-border rounded-lg p-8 text-center">
-        <p className="text-body text-text-muted">
-          {isAdmin(session) ? "Admin" : "Cashier"} dashboard — Phase 1 complete.
-          <br />
-          Master data and motorcycle management coming in Phase 2.
-        </p>
-      </div>
-    </div>
+    <DashboardClient
+      initialMetrics={initialMetrics}
+      branches={branches}
+      isAdmin={userIsAdmin}
+      userName={session.user.name ?? "User"}
+    />
   );
 }
